@@ -1,37 +1,16 @@
-## Welcome to GitHub Pages
+## GSoC 2021 with NumFOCUS 
 
-You can use the [editor on GitHub](https://github.com/villirion/Colour-Science/edit/gh-pages/index.md) to maintain and preview the content for your website in Markdown files.
+Hi ! I'm Cédric DOLLET, a french student in Cergy a city near Paris. 
+I've been selected to GSoC 2021 and this is a blog that will tell you my journey.
 
-Whenever you commit to this repository, GitHub Pages will run [Jekyll](https://jekyllrb.com/) to rebuild the pages in your site, from the content in your Markdown files.
+## Colour
 
-### Markdown
+Colour is an open-source python package providing a comprehensive number of
+algorithms and datasets for colour-science. So it's a very complete package of
+different ways to manage colors in scientific and research projects.
 
-Markdown is a lightweight and easy-to-use syntax for styling your writing. It includes conventions for
+# My proposal
 
-```markdown
-Syntax highlighted code block
-
-# Header 1
-## Header 2
-### Header 3
-
-- Bulleted
-- List
-
-1. Numbered
-2. List
-
-**Bold** and _Italic_ and `Code` text
-
-[Link](url) and ![Image](src)
-```
-
-For more details see [GitHub Flavored Markdown](https://guides.github.com/features/mastering-markdown/).
-
-### Jekyll Themes
-
-Your Pages site will use the layout and styles from the Jekyll theme you have selected in your [repository settings](https://github.com/villirion/Colour-Science/settings/pages). The name of this theme is saved in the Jekyll `_config.yml` configuration file.
-
-### Support or Contact
-
-Having trouble with Pages? Check out our [documentation](https://docs.github.com/categories/github-pages-basics/) or [contact support](https://support.github.com/contact) and we’ll help you sort it out.
+You can found the propasal I send [here](https://drive.google.com/file/d/1mO5zLtGICHV1qgvm7F7Hz8ZniUTRhU7E/view?ths=true)
+To summarise I will focus on the implementation of a support for spectral sensitivity 
+functions for digital color Cameras and the implementation of new colour.appearance model.
