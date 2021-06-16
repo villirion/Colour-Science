@@ -23,7 +23,7 @@ def GetEigenvector(refl,retainE=6):
     
     v, e = np.linalg.eigh(A)
 
-    v = np.diag(v)
+    #v = np.diag(v)
     
     #v = v[len(v)-(retainE+1):len(v)]
     #e = e[:,len(e)-(retainE+1):len(e)]
