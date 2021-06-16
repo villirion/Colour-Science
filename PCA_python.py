@@ -1,6 +1,3 @@
-# the program does not give the same values as the one in matlab I think the problem comes from the function: GetEigenvector
-# or maybe it's a simple rounding problem
-
 import scipy.io
 import glob ##Unix style pathname pattern expansion
 import numpy as np
@@ -13,19 +10,18 @@ def getCameraSpectralSensitivity():
     matdict = []
     camName = []
     
-    for file in glob.glob(listFiles):
+    for file in sorted(glob.glob(listFiles)):
         mat = scipy.io.loadmat(file)
         matdict.append({k:v for k, v in mat.items() if k[0] != '_'})
         camName.append(file[len(prefix):-len(suffix)])
-        
         
     return matdict, camName
 
 def GetEigenvector(refl,retainE=6):
     
-    A=refl @ refl.conj().transpose()
-  
-    v, e = np.linalg.eig(A)
+    A= refl.transpose() @ refl
+    
+    v, e = np.linalg.eigh(A)
 
     v = np.diag(v)
     
