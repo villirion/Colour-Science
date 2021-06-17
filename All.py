@@ -1,6 +1,7 @@
 import scipy.io
 import glob ##Unix style pathname pattern expansion
 import numpy as np
+import matplotlib.pyplot as plt
 
 def getCameraSpectralSensitivity():
 
