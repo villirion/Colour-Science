@@ -3,6 +3,8 @@
 Hi! I'm Cédric DOLLET, I'm a french student. 
 This is my github for the Gsoc 2021.
 
-PCACameraSensitivity.m, getCameraSpectralSensitivity.m and GetEigenvector.m are the original matlab function that i have translate in python in PCA_python.py.
+I upload all the original matlab function and the translation in python that I have done.
 
-getCameraSpectralSensitivity.py is an alternative function to the one in PCA_python.py, it makes the data easier to use.
+getCameraSpectralSensitivityAltern.py is an alternative function, it makes the data easier to use.
+
+all the function aren't completely translate yet the PCA related one work as well as getDaylightScalars
