@@ -1,3 +1,5 @@
+import numpy as np
+
 def GetEigenvector(refl,retainE=6):
     
     A = refl.conj().transpose()  @ refl 
