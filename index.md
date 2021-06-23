@@ -11,3 +11,8 @@ Colour is an open-source python package providing a complete set of algorithms a
 
 You can find the propasal I sent [here](https://drive.google.com/file/d/1mO5zLtGICHV1qgvm7F7Hz8ZniUTRhU7E/view?ths=true)
 In summary, I will focus on implementing support for spectral sensitivity functions for digital color cameras and implementing a new color and appearance model.
+
+# Spectral sensitivity functions for digital color cameras
+###### 21 june
+
+For Spectral sensitivity functions for digital color cameras, I need to translate the matlab functions of a scientist into python functions. I started by reading the article to understand what these matlab functions do. Once I had a general idea of how they work I started translating them. The matlab syntax is different from the python one but you get used to it quickly. The biggest difficulty is that many matlab functions don't exist in python but fortunately they have almost all a numpy equivalent (Here is a very useful site[https://numpy.org/doc/stable/user/numpy-for-matlab-users.html]). I've almost finished translating the functions, you can follow my progress here[https://github.com/villirion/Colour-Science].
