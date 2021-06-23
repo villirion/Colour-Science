@@ -7,4 +7,4 @@ I upload all the original matlab function (from http://www.gujinwei.org/research
 
 getCameraSpectralSensitivityAltern.py is an alternative function, it makes the data easier to use.
 
-all the function aren't completely translate yet the PCA related one work as well as getDaylightScalars
+all the function aren't completely translate yet
