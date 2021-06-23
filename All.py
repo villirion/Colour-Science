@@ -2,6 +2,9 @@ import scipy.io
 import glob ##Unix style pathname pattern expansion
 import numpy as np
 import matplotlib.pyplot as plt
+from PIL import Image
+import os
+
 
 def getCameraSpectralSensitivity():
 
@@ -108,27 +111,24 @@ def GetPatchRadiance(img,row,col,sampleSz):
 
     #save in row major order
     
-    radiance = np.zeros(1,len(row)*len(col))
+    radiance = np.zeros((1,len(row)*len(col)))
 
     for i in range (0,len(row)):
         for j in range(0,len(col)):
-            pixels = img[row(i)-sampleSz/2:row(i)+sampleSz/2,col(j)-sampleSz/2:col(j)+sampleSz/2] #revoir plus tard
-            radiance[(i-1)*len(col)+j] = numpy.mean(pixels)
+            pixels = img[row[i]-sampleSz//2:row[i]+sampleSz//2 , col[j]-sampleSz//2:col[j]+sampleSz//2]
+            radiance[0][i*len(col)+j] = np.mean(pixels)
 
     return radiance
 
 def GetRGBdc(folder,bayerP):
     
-    ##pas encore changer
-    load([folder,'rawData.mat'])
-    img = double(img)
-    imgDark = imread([folder,'./canon60d_black.pgm'])
-
-
-    img2 = img-double(imgDark)
-    ##pas encore changer
-    
-    img2 = [0 if x<0 else x for x in img2]
+    ImgRaw = Image.open(folder+filename+'.pgm')
+    img = np.asarray(ImgRaw)
+    #img = double(img)
+    ImgRaw2 = Image.open(folder+'./canon60d_black.pgm')
+    imgDark = np.asarray(ImgRaw2)
+    img2 = img-imgDark # original doucle(imgDark)
+    img2[img2 < 0] = 0
 
     if bayerP == 'RGGB':
         imgR = img2[::2, ::2]
@@ -146,58 +146,63 @@ def GetRGBdc(folder,bayerP):
         imgR = img2[::2, 2::2]
         imgG = img2[::2, ::2]
         imgB = img2[2::2, ::2]
-   
-    ## Pas encore changer
     
-    xyCornerFile='xyCorner.mat'
     
-    if not (dir([folder,xyCornerFile])):
-        
-        imagesc(imgG)
-        grid on
-
-        xyCorner=ginput(4)
-        save ([folder,xyCornerFile], 'xyCorner')
+    """
+    if not os.path.exists(folder+xyCornerFile):   
+        plt.plot(imgG) # peut etre?
+        xyCorner = plt.ginput(4)
+        print(xyCorner)
+        plt.savefig(folder+xyCornerFile+'/xyCorner.mat')
     else:
-        load([folder,xyCornerFile])
-
-
-    xyCorner = round(xyCorner)
+        scipy.io.loadmat(folder+xyCornerFile)
+        
+    xyCorner = round(xyCorner)    
     xyCorner = np.flip(xyCorner,2)
-
-    rowRange = min(xyCorner(1:2,1)):min(xyCorner(3:4,1))
-    colRange = min(xyCorner([1,4],2)):max(xyCorner([2,3],2))
+    """
+    #xyCorner is always the same values so for now i take directly the values in order 
+    #to test the other function who are related to this one
     
-    ##pas encore changer
+    xyCorner =  [[486 , 722],
+                 [483 , 1433],
+                 [915 , 1430],
+                 [915 , 725]]
 
-    imgR = imgR[rowRange,colRange]
-    imgG = imgG[rowRange,colRange]
-    imgB = imgB[rowRange,colRange]
+    rowRange = [i for i in range(min(xyCorner[0][0],xyCorner[1][0]),max(xyCorner[2][0],xyCorner[3][0])+1)]
+    colRange = [i for i in range(min(xyCorner[0][1],xyCorner[3][1]),max(xyCorner[1][1],xyCorner[2][1])+1)]
+    
+    
+    imgR = imgR[np.ix_(rowRange,colRange)]
+    imgG = imgG[np.ix_(rowRange,colRange)]
+    imgB = imgB[np.ix_(rowRange,colRange)]
 
-    plt.plot(imgR)
-    plt.show()
-
+    ##plt.plot(imgR)
+    ##plt.show()
+    ##mettre la grille
+    
     nRow = 12
     nCol = 20
 
-    patchSz = [imgR.shape[0]/nRow,imgR.shape[1]/nCol]
+    patchSz = [imgR.shape[0]//nRow,imgR.shape[1]//nCol]
 
-    col = [i for i in range(patchSz[1]/2,imgG.shape[1],patchSz[1])]
-    row = [i for i in range(patchSz[0]/2,imgG.shape[0],patchSz[0])]
+    col = [i for i in range(patchSz[1]//2,int(imgG.shape[1]),patchSz[1])]
+    row = [i for i in range(patchSz[0]//2,int(imgG.shape[0]),patchSz[0])]
 
-    col = round(col)
-    row = round(row)
+    #col = round(col)
+    #row = round(row)
 
-    plt.plot(col,np.tile(row,length(col),1),'ko')
+    ##plt.plot(col,np.tile(row,length(col),1),'ko')
 
-    patchSamplingSz=4
-    radiance = np.zeros(3,nRow*nCol)
+    patchSamplingSz = 4
+    radiance = np.zeros((3,nRow*nCol))
 
     radiance[0,:] = GetPatchRadiance(imgR,row,col,patchSamplingSz)
     radiance[1,:] = GetPatchRadiance(imgG,row,col,patchSamplingSz)
     radiance[2,:] = GetPatchRadiance(imgB,row,col,patchSamplingSz)
 
     return radiance
+
+# the two other function are not tested
 
 def RecoverCMFev(ill,reflSet,w,XYZSet,e):
 
