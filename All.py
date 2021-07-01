@@ -1,10 +1,10 @@
-import scipy.io
-import glob ##Unix style pathname pattern expansion
 import numpy as np
 import matplotlib.pyplot as plt
+import scipy.io
 from PIL import Image
 import os
-
+import glob 
+from scipy.interpolate import interp1d
 
 def getCameraSpectralSensitivity():
 
@@ -16,18 +16,21 @@ def getCameraSpectralSensitivity():
     
     for file in sorted(glob.glob(listFiles)):
         mat = scipy.io.loadmat(file)
-        matdict.append({k:v for k, v in mat.items() if k[0] != '_'})
+        if len(mat['r'])==1:
+            matdict.append({k:v[0] for k, v in mat.items() if k[0] != '_'})
+        else:
+            matdict.append({k:v.reshape(len(v)) for k, v in mat.items() if k[0] != '_'})
         camName.append(file[len(prefix):-len(suffix)])
         
     return matdict, camName
 
 def GetEigenvector(refl,retainE=6):
     
-    A= refl.transpose() @ refl
-    
+    #A=refl @refl.conj().transpose() 
+    A=refl.transpose()@refl
     v, e = np.linalg.eigh(A)
 
-    #v = np.diag(v)
+    ##v = np.diag(v)
     
     #v = v[len(v)-(retainE+1):len(v)]
     #e = e[:,len(e)-(retainE+1):len(e)]
@@ -45,33 +48,26 @@ def PCACameraSensitivity(numEV=1):
     matdict, camName = getCameraSpectralSensitivity()
     
     redCMF = np.array(matdict[0]['r'])
+##    redCMF = np.array([matdict[i]['r'].tolist() for i in range(0,len(matdict))])
     greenCMF = np.array(matdict[0]['g'])
+##    greenCMF = np.array([matdict[i]['g'].tolist() for i in range(0,len(matdict))])
     blueCMF = np.array(matdict[0]['b'])
-
+##    blueCMF = np.array([matdict[i]['b'].tolist() for i in range(0,len(matdict))])
     for i in range(1,len(matdict)):
-        #there is a problem with the format of the 16th camera (cmf_Canon5D Mark II.mat I think)
-        if i != 16:
-            redCMF = np.vstack((redCMF, matdict[i]['r']))
-            greenCMF = np.vstack((greenCMF, matdict[i]['g']))
-            blueCMF = np.vstack((blueCMF, matdict[i]['b']))
-    
+##        if i != 16:
+        redCMF = np.vstack((redCMF, matdict[i]['r']))
+        greenCMF = np.vstack((greenCMF, matdict[i]['g']))
+        blueCMF = np.vstack((blueCMF, matdict[i]['b']))
+
         
     # normalize to each curve
     
     for i in range(0,len(greenCMF)):
-        redCMF[i] = redCMF[i]/redCMF[i].max()
+        redCMF[i]   = redCMF[i]/redCMF[i].max()
         greenCMF[i] = greenCMF[i]/greenCMF[i].max()
-        blueCMF[i] = blueCMF[i]/blueCMF[i].max()
+        blueCMF[i]  = blueCMF[i]/blueCMF[i].max()
 
     
-    # do PCA on cmf
-
-    
-    eRed = GetEigenvector(redCMF,numEV);
-    eGreen = GetEigenvector(greenCMF,numEV);
-    eBlue = GetEigenvector(blueCMF,numEV);
-    
-    return eRed,eGreen,eBlue
     # do PCA on cmf
 
     
@@ -104,23 +100,7 @@ def getDaylightScalars(CCT):
 
     return SD
 
-def GetPatchRadiance(img,row,col,sampleSz):
-
-    if(sampleSz%2):
-        sampleSz+=1
-
-    #save in row major order
-    
-    radiance = np.zeros((1,len(row)*len(col)))
-
-    for i in range (0,len(row)):
-        for j in range(0,len(col)):
-            pixels = img[row[i]-sampleSz//2:row[i]+sampleSz//2 , col[j]-sampleSz//2:col[j]+sampleSz//2]
-            radiance[0][i*len(col)+j] = np.mean(pixels)
-
-    return radiance
-
-def GetRGBdc(folder,bayerP):
+def GetRGBdc(folder,bayerP,filename):
     
     ImgRaw = Image.open(folder+filename+'.pgm')
     img = np.asarray(ImgRaw)
@@ -202,44 +182,33 @@ def GetRGBdc(folder,bayerP):
 
     return radiance
 
-# the two other function are not tested
+def GetPatchRadiance(img,row,col,sampleSz):
 
-def RecoverCMFev(ill,reflSet,w,XYZSet,e):
+    if(sampleSz%2):
+        sampleSz+=1
 
-    numRefl = reflSet.shape[1]
-
-    A = np.zeros(numRefl,e.shape[1])
-    b = np.zeros(A.shape[0],1)
-
-    deltaLambda = 10
-    weight = 1 
+    #save in row major order
     
-    for i in range(0,numRefl):
-        #weight=XYZSet(i)
-        A[i,:] = reflSet[:,i].conj().transpose() @ np.diag(ill) @ e * deltaLambda * weight #maybe different operator
-        b[i] = XYZSet[i]*weight #? if weight = 1 
+    radiance = np.zeros((1,len(row)*len(col)))
 
-    X = linalg.lstsq(A,b)
-    #X = lsqnonneg(A,b);
+    for i in range (0,len(row)):
+        for j in range(0,len(col)):
+            pixels = img[row[i]-sampleSz//2:row[i]+sampleSz//2 , col[j]-sampleSz//2:col[j]+sampleSz//2]
+            radiance[0][i*len(col)+j] = np.mean(pixels)
 
-    X = e*X
-
-
-    return X,A,b
+    return radiance
 
 def RecoverCSS_singlePic():
+    
+    folder = './raw/'
+    filename = 'img_0153'
+    os.system('dcraw -4 -D -j -v -t 0' + folder + filename + '.cr2') 
 
-    ##pas encore changer
-    folder='./raw/'
-    filename='img_0153'
+    #img = plt.imread(folder+filename+'.pgm')
+    #plt.savefig(folder+'rawData.mat')
 
-    system(['./dcraw -4 -D -j -v -t 0 ', [folder,filename,'.CR2']])
-
-    img = matplotlib.pyplot.imread([folder,filename,'.pgm'])
-    save ([folder,'rawData.mat'], 'img')
-
-    bayerP='RGGB'
-    ##pas encore changer
+    bayerP = 'RGGB'
+   
    
     reflectance = scipy.io.loadmat('CCDC_meas.mat')
 
@@ -254,7 +223,7 @@ def RecoverCSS_singlePic():
 
     Range = [i for i in range(21,221)]
 
-    refl2 = np.zeros(len(w),len(Range)-len(unwantedP))
+    refl2 = np.zeros((len(w),len(Range)-len(unwantedP)))
 
     idx = 0
     for i in Range:
@@ -264,10 +233,10 @@ def RecoverCSS_singlePic():
 
     refl = refl2
 
-    radiance1 = GetRGBdc(folder,bayerP)
+    radiance1 = GetRGBdc(folder,bayerP,filename)
     radiance1 = radiance1/(2**16)
 
-    radiance2 = np.zeros(3,len(Range)-len(unwantedP))
+    radiance2 = np.zeros((3,len(Range)-len(unwantedP)))
     
     idx = 0
     for i in Range:
@@ -279,14 +248,12 @@ def RecoverCSS_singlePic():
     radiance = radiance.conj().transpose() #conj() probablement inutile
     
     ill = scipy.io.loadmat(folder + 'daylight.mat')['ill']
+    ill = ill.reshape(len(ill))
     w = [i for i in range(380,785,5)]
     
-    ##pas encore changer
-    ill_groundTruth = np.interp(w,ill,wWanted) 
+    ill_groundTruth = interp1d(w,ill)(wWanted)
 
-    ill_groundTruth = ill_groundTruth * 100 / ill_groundTruth(find(wWanted==560)) #tester en matlab
-
-    ##pas encore changer
+    ill_groundTruth = ill_groundTruth * 100 / ill_groundTruth[wWanted.index(560)]
 
     w = wWanted
 
@@ -296,66 +263,108 @@ def RecoverCSS_singlePic():
     
     for i in range(0,len(camNameAll)):
         if camNameAll[i] == camName:
-            cmf = [rgbCMF[0][:,i],rgbCMF[1][:,i],rgbCMF[2][:,i]]
+            cmf = [rgbCMF[i]['r'] + rgbCMF[i]['g'] + rgbCMF[i]['b']]
 
+    cmf = cmf/max(cmf)
 
-    cmf = cmf/cmf.max()
-
-    plt.plot(w, cmf[:,0], 'r', w, cmf[:,1], 'g', w,  cmf[:,2], 'b')
-    plt.xlabel('Measured camera response function')
-    plt.show()
+    #plt.plot(w, cmf[:,0], 'r', w, cmf[:,1], 'g', w,  cmf[:,2], 'b')
+    #plt.xlabel('Measured camera response function')
+    #plt.show()
 
     numEV=2
     eRed, eGreen, eBlue = PCACameraSensitivity(numEV)
 
     CCTrange = [i for i in range(4000,27100,100)]
            
-    diff_b = np.zeros(1,len(CCTrange))
+    #diff_b = np.zeros((1,len(CCTrange)))
+    diff_b = []
+    
+    cmfHat1 = []
     
     for i in range(0,len(CCTrange)):
         ill = getDaylightScalars(CCTrange[i])
         deltaLamda=10
         
-        cmfHat[:,0] = RecoverCMFev(ill,refl,w,radiance[:,0],eRed)
-        cmfHat[:,1] = RecoverCMFev(ill,refl,w,radiance[:,1],eGreen)
-        cmfHat[:,2] = RecoverCMFev(ill,refl,w,radiance[:,2],eBlue)
-
-        I_hat=refl.conj().transpose() @ np.diag(ill) @ cmfHat @ deltaLamda  #conj() probablement inutile
-        diff_b[i] = np.linalg.norm(radiance-I_hat)
+        cmfHat1.append(RecoverCMFev(ill,refl,w,radiance[:,0],eRed))         
+        cmfHat1.append(RecoverCMFev(ill,refl,w,radiance[:,1],eGreen))        
+        cmfHat1.append(RecoverCMFev(ill,refl,w,radiance[:,2],eBlue))    
+        
+        cmfHat = np.array((cmfHat1[0][0] , cmfHat1[1][0] , cmfHat1[2][0]))
+        cmfHat = cmfHat.transpose()
+        
+        I_hat = refl.conj().transpose() @ np.diag(ill) @ cmfHat * deltaLamda  #conj() probablement inutile
+        #diff_b[i] = np.linalg.norm(radiance-I_hat)
+        diff_b.append(np.linalg.norm(radiance-I_hat))
+        
+    #plt.plot(CCTrange, diff_b, '-o')
+    #plt.xlim(CCTrange[0],CCTrange[-1])
+    #plt.xlabel('CCT')
+    #plt.ylabel('norm of radiance difference')
+    #plt.show()
     
-    plt.plot(CCTrange, diff_b, '-o')
-    plt.xlim(CCTrange[0],CCTrange[-1])
-    plt.xlabel('CCT')
-    plt.ylabel('norm of radiance difference')
-    plt.show()
-    
-    minDiff = diff_b.min()
-    minDiffIdx = diff_b[minDiff]
+    minDiff = min(diff_b)
+    minDiffIdx = diff_b.index(minDiff)
     ill = getDaylightScalars(CCTrange[minDiffIdx])
 
-    ill = ill/ill(find(w==560)) #tester en matlab
+    ill = ill/ill[w.index(560)] 
 
     w = wWanted
     
-    ill_groundTruth = ill_groundTruth / ill_groundTruth(find(w==560));  #tester en matlab
+    ill_groundTruth = ill_groundTruth / ill_groundTruth[w.index(560)]  
     
-    plt.plot(w, ill_groundTrut, w, ill,'r-.')
-    #legend('measured daylight',label='our result');
-    plt.show()
+    #plt.plot(w, ill_groundTrut, w, ill,'r-.')
+    ##legend('measured daylight',label='our result');
+    #plt.show()
 
-    cmfHat[:,0] = RecoverCMFev(ill,refl,w,radiance[:,0],eRed)
-    cmfHat[:,1] = RecoverCMFev(ill,refl,w,radiance[:,1],eGreen)
-    cmfHat[:,2] = RecoverCMFev(ill,refl,w,radiance[:,2],eBlue)
+    cmfHat1 = []
+    
+    cmfHat1.append(RecoverCMFev(ill,refl,w,radiance[:,0],eRed))         
+    cmfHat1.append(RecoverCMFev(ill,refl,w,radiance[:,1],eGreen))        
+    cmfHat1.append(RecoverCMFev(ill,refl,w,radiance[:,2],eBlue)) 
      
+    cmfHat = np.array((cmfHat1[0][0] , cmfHat1[1][0] , cmfHat1[2][0]))
+    cmfHat = cmfHat.transpose()
+    
     cmfHat = cmfHat/cmfHat.max()
-    cmfHat = [0 if x<0 else x for x in cmfHat]
-
+    #cmfHat = [0 if x<0 else x for x in cmfHat]
+    cmfHat[cmfHat < 0] = 0
+    
     w = [i for i in range(400,730,10)]
     
-    plt.plot(w, cmf[:,0], 'r', w, cmf[:,1], 'g', w, cmf[:,2], 'b' )
-    plt.plot(w, cmfHat[:,0], 'r-.', w, cmfHat[:,1], 'g-.', w, cmfHat[:,2], 'b-.')
-    plt.show()
-    #legend('r_m','g_m','b_m','r_e','g_e','b_e');
+    #plt.plot(w, cmf[:,0], 'r', w, cmf[:,1], 'g', w, cmf[:,2], 'b' )
+    #plt.plot(w, cmfHat[:,0], 'r-.', w, cmfHat[:,1], 'g-.', w, cmfHat[:,2], 'b-.')
+    #plt.show()
+    ##legend('r_m','g_m','b_m','r_e','g_e','b_e');
     #save (['cmf',camName,'.mat'], 'cmf', 'cmfHat');
 
     return cmfHat
+
+def RecoverCMFev(ill,reflSet,w,XYZSet,e):
+
+    numRefl = reflSet.shape[1]
+
+    #A = np.zeros((numRefl,1)) # A = np.zeros((numRefl,e.shape[1]))
+    #b = np.zeros((A.shape[0],1))
+    
+    A = []
+    b = []
+    
+    deltaLambda = 10
+    weight = 1 
+
+    for i in range(0,numRefl):
+        #weight=XYZSet(i)
+        A.append(reflSet[:,i].transpose() @ np.diag(ill) @ e[0] * deltaLambda * weight) #test inversé les matrice
+        b.append(XYZSet[i]*weight) #? if weight = 1 
+    
+    A = np.array(A)
+    A.reshape(len(A),2)
+
+    X = np.linalg.lstsq(A,b)[0]
+    #X = lsqnonneg(A,b)[0]
+    
+    print(X)
+    
+    X = e[0] @ X
+    
+    return X,A,b
