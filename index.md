@@ -16,3 +16,8 @@ In summary, I will focus on implementing support for spectral sensitivity functi
 ###### 21 june
 
 For Spectral sensitivity functions for digital color cameras, I need to translate the matlab functions of a scientist into python functions. I started by reading the article to understand what these matlab functions do. Once I had a general idea of how they work I started translating them. The matlab syntax is different from the python one but you get used to it quickly. The biggest difficulty is that many matlab functions don't exist in python but fortunately they have almost all a numpy equivalent ([Here is a very useful site](https://numpy.org/doc/stable/user/numpy-for-matlab-users.html)). I've almost finished translating the functions, you can follow my progress [here](https://github.com/villirion/Colour-Science).
+
+
+###### 21 july
+After the translation of the different functions, we decided to keep only 3 of the 8 functions: GetEigenvector, PCACameraSensitivity, RecoverCMFev. For the others getCameraSpectralSensitivity is used to recover the spectral sensitivity already acquired so not necessary, getDaylightScalars.py has already an equivalent at colour as well as GetPatchRadianc GetRGBdc which can be replaced by other functions according to the need, as for RecoverCSS_singlePic it is the function which is used to call the other functions and to plot it will be replaced by a user function. I'm working on the finishing touches to be able to implement them on colour science at the same time as starting the next project: the implementation of a new color appearance model 
+
