@@ -1,3 +1,5 @@
+import numpy as np
+
 def Zhai_Luo(Xb,Yb,Zb, Xwb,Ywb,Zwb, Db, Xws,Yws,Zws, Ds, Xwo,Ywo,Zwo, CAT="CAT02"):
     
     if CAT == "CAT02":
