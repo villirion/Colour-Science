@@ -1,10 +1,18 @@
 import numpy as np
 
-def Kim_Weyrich_Kautz(L,M,S, Lw,Mw,Sw, La):
-    # The adaptation level should ideally be the average luminance of the 10 degres
-    # viewing field (it serves as an input parameter to our model).
-
-    #The parameter nc is known only for primates, hence we have derived it from our experimental data as nc = 0.57.
+def Kim_Weyrich_Kautz(X,Y,Z, Xw,Yw,Zw, La):
+    
+    pi = np.pi
+    
+    MATRIX_XYZ_TO_LMS = np.array([
+        [0.38971, 0.68898, -0.07868],
+        [-0.22981, 1.18340, 0.04641],
+        [0.00000, 0.00000, 1.00000],
+    ])
+    
+    L,M,S = MATRIX_XYZ_TO_LMS @ np.array([[X],[Y],[Z]])
+    Lw,Mw,Sw = MATRIX_XYZ_TO_LMS @ np.array([[Xw],[Yw],[Zw]])
+    
     nc = 0.57
 
     # (2)
@@ -48,11 +56,11 @@ def Kim_Weyrich_Kautz(L,M,S, Lw,Mw,Sw, La):
 
     # (10) & (11)
     Ak = 456.5 ; nk = 0.62 ; Am = 0.11 ; Bm = 0.61
-    C = Ak*(sqrt(a**2+b**2)**nk)
+    C = Ak*(np.sqrt(a**2+b**2)**nk)
     M = C*(Am*np.log(10)*Lw+Bm) #verifier log 
 
     # (12)
-    S = 100*np.sqrt(M/Q)
+    s = 100*np.sqrt(M/Q)
 
     # (13)
     h = (180/pi)*np.tan(b/a)**(-1)
@@ -61,3 +69,19 @@ def Kim_Weyrich_Kautz(L,M,S, Lw,Mw,Sw, La):
           "\nColourfulness : ", M,"\nSaturation : ", S, "\nHue angle : ", h)
 
     return J,Q,C,M,S,h
+
+"""
+#input : 
+
+XYZ = np.array([19.01, 20.00, 21.78])
+X = XYZ[0]
+Y = XYZ[1]
+Z = XYZ[2]
+XYZ_w = np.array([95.05, 100.00, 108.88])
+Xw = XYZ_w[0]
+Yw = XYZ_w[1]
+Zw = XYZ_w[2]
+L_A = 318.31
+
+Kim_Weyrich_Kautz(X,Y,Z, Xw,Yw,Zw, L_A)
+"""
