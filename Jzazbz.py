@@ -38,14 +38,16 @@ def Jzazbz(Xd65,Yd65,Zd65,Yb,Yw,La,c):
     pi = np.pi
     
     #(1) 
-    M1 = np.matrix([[b*Xd65],[g*Yd65]]) - np.matrix([[(b-1)*Zd65],[(g-1)*Xd65]])
-    Xdp65,Ydp65 = M1.item(0), M1.item(1)
+    Xdp65,Ydp65 = np.array([[b*Xd65],[g*Yd65]]) - np.array([[(b-1)*Zd65],[(g-1)*Xd65]])
     
     #(2)
-    Mt = np.matrix([[0.41478972, 0.579999, 0.0146480], [-0.2015100, 1.120649, 0.0531008], [-0.0166008, 0.264800, 0.6684799]])
+    Mt = np.array([
+        [0.41478972, 0.579999, 0.0146480],
+        [-0.2015100, 1.120649, 0.0531008], 
+        [-0.0166008, 0.264800, 0.6684799],
+    ])
 
-    M2 = Mt @ np.matrix([[Xdp65], [Ydp65], [Zd65]])
-    R,G,B = M2.item(0), M2.item(1), M2.item(2)
+    R,G,B = Mt @ np.array([Xdp65, Ydp65, [Zd65]])
     
     #(3) 
     Rp = ((c1+c2*(R/10000)**n)/(1+c3*(R/10000)**n))**p
@@ -53,31 +55,34 @@ def Jzazbz(Xd65,Yd65,Zd65,Yb,Yw,La,c):
     Bp = ((c1+c2*(B/10000)**n)/(1+c3*(B/10000)**n))**p
 
     # (4) 
-    Mt2 = np.matrix([[0,        1,         0,], [3.524000, -4.066708, 0.542708,], [0.199076, 1.096799, -1.295875]])
-
-    M3 = Mt2 @ np.matrix([[Rp], [Gp], [Bp]])
-    I,az,bz = M3.item(0), M3.item(1), M3.item(2)
-
+    Mt2 = np.array([
+        [0,        1,         0,],
+        [3.524000, -4.066708, 0.542708,],
+        [0.199076, 1.096799, -1.295875],
+    ])
+    
+    I,az,bz  = Mt2 @ np.array([Rp, Gp, Bp])
+    
     #(5)
-    h = np.arctan(bz/az) # 0<=h<=360
+    h = np.arctan(bz.item(0)/az.item(0)) # 0<=h<=360
     hi, hp, hip, Hi, ei, eip = get_val(h)
 
     # (6) 
     et = 1.01+np.cos(1.55+(hp*pi)/180)
-    H = Hi+ (100*(hp-hi)/ei)/(((hp-hi)/ei)+((hip-hp)/eip))
+    H = Hi + (100*(hp-hi)/ei)/(((hp-hi)/ei)+((hip-hp)/eip))
 
     # (7) La en input yb yw pas sur de ce que c'est
     FL = get_FL(La) 
     alpha = get_alpha(Yb,Yw)
 
     # c en input
-    Q = 192 * I**1.17 * np.sqrt(FL/c)
+    Q = 192 * I.item(0)**1.17 * np.sqrt(FL/c)
     
     # (8) Qn = Q*n ?
     J = 89*(Q/(Q*n))**(0.72*c*alpha)
 
     # (9) 
-    C = (1/n)**0.074*(az**2+bz**2)**0.37*(et)**0.067
+    C = (1/n)**0.074*(az.item(0)**2+bz.item(0)**2)**0.37*(et)**0.067
 
     # (10) 
     M = 1.42*C*(FL)**0.25
@@ -85,23 +90,9 @@ def Jzazbz(Xd65,Yd65,Zd65,Yb,Yw,La,c):
     # (11) 
     S = 100*(M/Q)**0.5
     
-    """
-    # (12) L = J ? Cab = C ou Cab = M?
-    Wab = 100 - np.sqrt((100-L)**2+(Cab)**2)
-
-    # (13) 
-    Kab = 100 - np.sqrt((L)**2+(Cab)**2)
-
-    # (14) 
-    Vab = np.sqrt((50-L)**2+(Cab)**2)
-
-    # (15) 
-    Chrom = 100 - Wab - Kab
-    """
-    
     print("Lightness : ", J, "\nBrightness : ", Q, "\nChroma : ", C, "\nColourfulness : ", M, "\nSaturation : ", S)
 
-    return J,Q,C,M,S
+    return J,Q,C,M,S,h
   
 """
 #input : 
