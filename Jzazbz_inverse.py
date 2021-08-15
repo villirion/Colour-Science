@@ -1,6 +1,6 @@
 import numpy as np
 
-def Jzazbz_inverse(h, Q, C,La,c):
+def Jzazbz_inverse(h, Q, C, La, c):
     
     def get_FL(La):
         k = (5*La + 1)**(-1)
@@ -44,6 +44,7 @@ def Jzazbz_inverse(h, Q, C,La,c):
     
     #tester equa I
     I = np.exp(np.log(Q / 192 / np.sqrt(FL/c))/1.17)
+    I = 0.0111804810096925*(Q*(FL/c)**(-0.5))**(100/117)
     
     Mt2 = np.array([
         [0,        1,         0],
@@ -54,19 +55,31 @@ def Jzazbz_inverse(h, Q, C,La,c):
     Rp, Gp, Bp = np.linalg.inv(Mt2) @ np.array([[I], [az], [bz]])
     
     #retourner l'equation
-    Rp = ((c1+c2*(R/10000)**n)/(1+c3*(R/10000)**n))**p
-    Gp = ((c1+c2*(G/10000)**n)/(1+c3*(G/10000)**n))**p
-    Bp = ((c1+c2*(B/10000)**n)/(1+c3*(B/10000)**n))**p
+    R = (10000**n*(-Rp**(1/p) + c1)/(Rp**(1/p)*c3 - c2))**(1/n)
+    G = (10000**n*(-Gp**(1/p) + c1)/(Gp**(1/p)*c3 - c2))**(1/n)
+    B = (10000**n*(-Bp**(1/p) + c1)/(Bp**(1/p)*c3 - c2))**(1/n)
 
-    Mt = np.matrix([
+    Mt = np.array([
         [0.41478972, 0.579999, 0.0146480],
         [-0.2015100, 1.120649, 0.0531008],
         [-0.0166008, 0.264800, 0.6684799],
     ])
-
-    Xdp65, Ydp65, Zd65 = np.linalg.inv(Mt) @ np.matrix([[R], [G], [B]])
+    
+    Xdp65, Ydp65, Zd65 = np.linalg.inv(Mt) @ np.array([R, G, B])
     
     Xd65 = (Xdp65 + (b-1)*Zd65)/b 
     Yd65 = (Ydp65 + (g-1)*Xd65)/g 
     
     return Xd65,Yd65,Zd65
+
+"""
+#input : 
+
+h = -0.13977254973597023
+Q = 6.599321089883086e+138
+C = 5.8218574120673214e+85
+L_A = 318.31
+c = 0.69
+
+Jzazbz_inverse(h,Q,C,L_A,c)
+"""
