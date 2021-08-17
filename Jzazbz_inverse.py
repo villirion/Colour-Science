@@ -29,7 +29,7 @@ def Jzazbz_inverse(h, Q, C, La, c):
     
     # variable
     b = 1.16; g = 0.7; c1 = 3424/(2**12)
-    c2 = 2413/(2**7); c3 = 2392/(2**14)
+    c2 = 2413/(2**7); c3 = 2392/(2**7)
     n = 2610/(2**14); p = 1.7*2523/(2**5)
     pi = np.pi
     
@@ -42,9 +42,9 @@ def Jzazbz_inverse(h, Q, C, La, c):
     
     FL = get_FL(La) 
     
-    #tester equa I
+
     I = np.exp(np.log(Q / 192 / np.sqrt(FL/c))/1.17)
-    I = 0.0111804810096925*(Q*(FL/c)**(-0.5))**(100/117)
+    #I = 0.0111804810096925*(Q*(FL/c)**(-0.5))**(100/117)
     
     Mt2 = np.array([
         [0,        1,         0],
@@ -54,7 +54,6 @@ def Jzazbz_inverse(h, Q, C, La, c):
     
     Rp, Gp, Bp = np.linalg.inv(Mt2) @ np.array([[I], [az], [bz]])
     
-    #retourner l'equation
     R = (10000**n*(-Rp**(1/p) + c1)/(Rp**(1/p)*c3 - c2))**(1/n)
     G = (10000**n*(-Gp**(1/p) + c1)/(Gp**(1/p)*c3 - c2))**(1/n)
     B = (10000**n*(-Bp**(1/p) + c1)/(Bp**(1/p)*c3 - c2))**(1/n)
