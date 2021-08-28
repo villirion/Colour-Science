@@ -1,6 +1,10 @@
 import numpy as np
 
-def Zhai_Luo(Xb,Yb,Zb, Xwb,Ywb,Zwb, Db, Xws,Yws,Zws, Ds, Xwo,Ywo,Zwo, CAT="CAT02"):
+def Zhai_Luo(XYZb, XYZwb, Db, XYZws, Ds, XYZwo, CAT="CAT02"):
+    
+    Ywo = XYZwo[1]
+    Ywb = XYZwb[1]
+    Yws = XYZws[1]
     
     if CAT == "CAT02":
         Mt = np.array([
@@ -16,35 +20,30 @@ def Zhai_Luo(Xb,Yb,Zb, Xwb,Ywb,Zwb, Db, Xws,Yws,Zws, Ds, Xwo,Ywo,Zwo, CAT="CAT02
             [-0.002079, 0.048952, 0.953127],
         ])
         
-    # (4)&(5)&(6)&(7)
-    Rb,Gb,Bb = Mt @ np.array([[Xb], [Yb], [Zb]])
-    Rwb,Gwb,Bwb = Mt @ np.array([[Xwb], [Ywb], [Zwb]])
-    Rws,Gws,Bws = Mt @ np.array([[Xws], [Yws], [Zws]])
-    Rwo,Gwo,Bwo = Mt @ np.array([[Xwo], [Ywo], [Zwo]])
+    
+    RGBb = Mt @ XYZb
+    RGBwb = Mt @ XYZwb
+    RGBws = Mt @ XYZws
+    RGBwo = Mt @ XYZwo
+    
+    Drgbb = Db * (Ywb/Ywo) * (RGBwo/RGBwb) + 1 - Db
+    Drgbs = Ds * (Yws/Ywo) * (RGBwo/RGBws) + 1 - Ds
 
-    # (8)&(9)&(10)&(11)&(12)&(13)
-    Drb = Db * (Ywb/Ywo) * (Rwo/Rwb) + 1 - Db
-    Dgb = Db * (Ywb/Ywo) * (Gwo/Gwb) + 1 - Db
-    Dbb = Db * (Ywb/Ywo) * (Bwo/Bwb) + 1 - Db
-    Drs = Ds * (Yws/Ywo) * (Rwo/Rws) + 1 - Ds
-    Dgs = Ds * (Yws/Ywo) * (Gwo/Gws) + 1 - Ds
-    Dbs = Ds * (Yws/Ywo) * (Bwo/Bws) + 1 - Ds
-    
-    # (14)&(15)&(16)
-    Dr = (Drb/Drs)
-    Dg = (Dgb/Dgs)
-    Db = (Dbb/Dbs)
-    
-    # (17)&(18)&(19)
-    Rs = Dr*Rb
-    Gs = Dg*Gb
-    Bs = Db*Bb
-    
-    # (20)
-    Xs,Ys,Zs = np.linalg.inv(Mt) @  np.array([Rs, Gs, Bs])
-    
-    return Xs.item(0),Ys.item(0),Zs.item(0)
+    Drgb = (Drgbb/Drgbs)
 
+    RGBs = Drgb*RGBb
+
+    XYZs = np.linalg.inv(Mt) @ RGBs
+    
+    return XYZs
+    
 """
-Zhai_Luo(48.900,43.620,6.250, 109.850,100,35.585, 0.9407, 95.047,100,108.883, 0.9800, 100,100,100, 'CAT16')
-"""
+XYZb = np.array([48.900,43.620,6.250])
+XYZwb = np.array([109.850,100,35.585])
+Db = 0.9407
+XYZws = np.array([95.047,100,108.883])
+Ds = 0.9800
+XYZwo = np.array([100,100,100])
+
+Zhai_Luo2(XYZb, XYZwb, Db, XYZws, Ds, XYZwo, 'CAT16')
+""" 
