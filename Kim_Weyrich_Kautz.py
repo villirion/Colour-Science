@@ -1,40 +1,12 @@
 import numpy as np
 
-def Kim_Weyrich_Kautz(X,Y,Z, Xw,Yw,Zw, La, E="LCD"):
+def Kim_Weyrich_Kautz(XYZ, XYZw, La, E="LCD"):
     
+    Aj = 0.89 ; Bj = 0.24 ; Oj = 0.65 ; nj = 3.65
+    Ak = 456.5 ; nk = 0.62 ; Am = 0.11 ; Bm = 0.61
+    nc = 0.57 ; nq = 0.1308
     pi = np.pi
     
-    MATRIX_XYZ_TO_LMS = np.array([
-        [0.38971, 0.68898, -0.07868],
-        [-0.22981, 1.18340, 0.04641],
-        [0.00000, 0.00000, 1.00000],
-    ])
-    
-    L,M,S = MATRIX_XYZ_TO_LMS @ np.array([[X],[Y],[Z]])
-    Lw,Mw,Sw = MATRIX_XYZ_TO_LMS @ np.array([[Xw],[Yw],[Zw]])
-    
-    nc = 0.57
-
-    # (2)
-    Lp = (L**nc)/(L**nc + La**nc)
-    Mp = (M**nc)/(M**nc + La**nc)
-    Sp = (S**nc)/(S**nc + La**nc)
-    
-    #question does Aw is with Lwp or just Lw 
-    Lwp = (Lw**nc)/(Lw**nc + La**nc)
-    Mwp = (Mw**nc)/(Mw**nc + La**nc)
-    Swp = (Sw**nc)/(Sw**nc + La**nc)
-    
-    # (3)
-    A = (40*Lp+20*Mp+Sp)/61
-    
-    Aw = (40*Lwp+20*Mwp+Swp)/61
-
-    # (4) & (5)
-    Aj = 0.89 ; Bj = 0.24 ; Oj = 0.65 ; nj = 3.65
-    Jp = ((-((A/Aw)-Bj)*Oj**nj)/((A/Aw)-Bj-Aj))**(1/nj)
-    
-    # (6)
     if E == "LCD":
         E = 1.0
     if E == "media":
@@ -43,34 +15,40 @@ def Kim_Weyrich_Kautz(X,Y,Z, Xw,Yw,Zw, La, E="LCD"):
         E = 1.4572
     if E == "paper":
         E = 1.7526
-        
+    
+    MATRIX_XYZ_TO_LMS = np.array([
+        [0.38971, 0.68898, -0.07868],
+        [-0.22981, 1.18340, 0.04641],
+        [0.00000, 0.00000, 1.00000],
+    ])
+    
+    LMS = MATRIX_XYZ_TO_LMS @ XYZ
+    LMSw = MATRIX_XYZ_TO_LMS @ XYZw
+    
+    LMSp = (LMS**nc)/(LMS**nc + La**nc)
+    LMSwp = (LMSw**nc)/(LMSw**nc + La**nc)
+
+    A = (40*LMSp[0]+20*LMSp[1]+LMSp[2])/61
+    Aw = (40*LMSwp[0]+20*LMSwp[1]+LMSwp[2])/61
+
+    Jp = ((-((A/Aw)-Bj)*Oj**nj)/((A/Aw)-Bj-Aj))**(1/nj)
+ 
     J = 100*(E*(Jp-1)+1)
 
-    # (7)
-    nq = 0.1308
-    Q = J*(Lw)**nq
+    Q = J*(LMSw[0])**nq
 
-    # (8)
-    a = (1/11)*(11*Lp-12*Mp+Sp)
+    a = (1/11)*(11*LMSp[0]-12*LMSp[1]+LMSp[2])
+    b = (1/9)*(LMSp[0]+LMSp[1]-2*LMSp[2])
 
-    # (9)
-    b = (1/9)*(Lp+Mp-2*Sp)
-    
-    # (10) & (11)
-    Ak = 456.5 ; nk = 0.62 ; Am = 0.11 ; Bm = 0.61
     C = Ak*(np.sqrt(a**2+b**2)**nk)
-    M = C*(Am*np.log10(Lw)+Bm) #verifier log 
-    
-    # (12)
+    M = C*(Am*np.log10(LMSw[0])+Bm)
     s = 100*np.sqrt(M/Q)
-
-    # (13)
     h = (180/pi)*np.arctan(b/a)
 
-    print("Lightness : ", J, "\nBrightness : ", Q, "\nChroma : ", C, 
-          "\nColourfulness : ", M,"\nSaturation : ", S, "\nHue angle : ", h)
+    # print("Lightness : ", J, "\nBrightness : ", Q, "\nChroma : ", C, 
+    #       "\nColourfulness : ", M,"\nSaturation : ", s, "\nHue angle : ", h)
 
-    return J,Q,C,M,S,h
+    return J,Q,C,M,s,h
 
 """
 #input : 
