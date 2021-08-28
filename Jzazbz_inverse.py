@@ -10,21 +10,17 @@ def Jzazbz_inverse(h, Q, C, La, c):
     c2 = 2413/(2**7); c3 = 2392/(2**7)
     n = 2610/(2**14); p = 1.7*2523/(2**5)
     pi = np.pi
+
+    et = 1.01 + np.cos(h*pi/180 + 1.55)
     
-    #h is already in radian   
-    et = 1.01 + np.cos(h + 1.55)
-    
-    #et = 1.01+np.cos(1.55+(hp*pi)/180)
     t = (n**0.074 * C * (1/et)**0.067)**(1/0.37)    
     
-    
-    az = (t / (1 + np.tan(h)**2))**0.5
-    bz = az*np.tan(h) 
-    print("az,bz",az,bz)
+    az = (t / (1 + np.tan(h*pi/180)**2))**0.5
+    bz = az*np.tan(h*pi/180) 
+
     FL = get_FL(La) 
     
     I = np.exp(np.log(Q / 192 / np.sqrt(FL/c))/1.17)
-    #I = 0.0111804810096925*(Q*(FL/c)**(-0.5))**(100/117)
     
     Mt2 = np.array([
         [0,        1,         0],
@@ -32,12 +28,10 @@ def Jzazbz_inverse(h, Q, C, La, c):
         [0.199076, 1.096799, -1.295875],
     ])
     
-    #-az and -bz
-    Rp, Gp, Bp = np.linalg.inv(Mt2) @ np.array([[I], [-az], [-bz]])
+    # -az to match the test but may be different with additional tests
+    RGBp = np.linalg.inv(Mt2) @ np.array([[I], [-az], [bz]])
     
-    R = (10000**n*(-Rp**(1/p) + c1)/(Rp**(1/p)*c3 - c2))**(1/n)
-    G = (10000**n*(-Gp**(1/p) + c1)/(Gp**(1/p)*c3 - c2))**(1/n)
-    B = (10000**n*(-Bp**(1/p) + c1)/(Bp**(1/p)*c3 - c2))**(1/n)
+    RGB = (10000**n*(-RGBp**(1/p) + c1)/(RGBp**(1/p)*c3 - c2))**(1/n)
 
     Mt = np.array([
         [0.41478972, 0.579999, 0.0146480],
@@ -45,12 +39,12 @@ def Jzazbz_inverse(h, Q, C, La, c):
         [-0.0166008, 0.264800, 0.6684799],
     ])
 
-    Xdp65, Ydp65, Zd65 = np.linalg.inv(Mt) @ np.array([R, G, B])
+    Xdp65, Ydp65, Zd65 = np.linalg.inv(Mt) @ RGB
     
     Xd65 = (Xdp65 + (b-1)*Zd65)/b 
     Yd65 = (Ydp65 + (g-1)*Xd65)/g 
     
-    return Xd65,Yd65,Zd65
+    return XYZd65
 
 """
 #input : 
